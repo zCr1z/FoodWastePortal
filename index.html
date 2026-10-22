@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Surplus Food Portal</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#18312a;background:#f4f8f4}
+*{box-sizing:border-box}body{margin:0}header{background:#176b4d;color:white;padding:28px max(5vw,20px)}
+header h1{margin:0 0 8px;font-size:clamp(1.7rem,4vw,2.5rem)}header p{margin:0;color:#d9f2e6}
+main{max-width:1200px;margin:28px auto;padding:0 20px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.stat,.panel{background:white;border:1px solid #dce8df;border-radius:14px;padding:18px;box-shadow:0 3px 12px #163e2a0a}
+.stat span{display:block;color:#61776c;font-size:.9rem}.stat strong{display:block;font-size:2rem;margin-top:7px}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+input,select{padding:10px 12px;border:1px solid #c7d8cd;border-radius:8px;background:white;font:inherit}
+table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:13px 12px;border-bottom:1px solid #e6eee8;vertical-align:top}th{font-size:.83rem;text-transform:uppercase;letter-spacing:.04em;color:#597064;background:#f7faf7}
+.table-wrap{overflow-x:auto}.status{display:inline-block;padding:5px 9px;border-radius:999px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.available{background:#dcfce7;color:#166534}.reserved{background:#fef3c7;color:#92400e}.collected{background:#dbeafe;color:#1d4ed8}.redistributed{background:#ede9fe;color:#6d28d9}
+.quantity{font-weight:700;white-space:nowrap}.muted{color:#61776c;font-size:.9rem}.foot{padding:18px 0;color:#61776c;font-size:.9rem}
+@media(max-width:600px){header{padding:22px 18px}main{padding:0 12px}.stat{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🥗 Surplus Food Redistribution Portal</h1>
+  <p>Connect surplus meals with community organizations before collection deadlines.</p>
+</header>
+<main>
+  <section class="stats" aria-label="Redistribution status dashboard">
+    <div class="stat"><span>Available to collect</span><strong id="availableCount">0</strong><span id="availableQty">0 kg estimated</span></div>
+    <div class="stat"><span>Reserved</span><strong id="reservedCount">0</strong><span>records</span></div>
+    <div class="stat"><span>Collected</span><strong id="collectedCount">0</strong><span>records</span></div>
+    <div class="stat"><span>Redistributed</span><strong id="redistributedCount">0</strong><span>records</span></div>
+  </section>
+  <section class="panel">
+    <div class="toolbar">
+      <div><h2 style="margin:0 0 5px">Surplus food listings</h2><div class="muted">Sample records for demonstration; contact the listed organization to coordinate pickup.</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="search" type="search" placeholder="Search food, location, organization…" aria-label="Search listings">
+        <select id="statusFilter" aria-label="Filter by status"><option value="All">All statuses</option><option>Available</option><option>Reserved</option><option>Collected</option><option>Redistributed</option></select>
+      </div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Food item</th><th>Contributor</th><th>Quantity</th><th>Collection deadline</th><th>Pickup location</th><th>Organization</th><th>Status</th></tr></thead>
+      <tbody id="records"></tbody>
+    </table></div>
+  </section>
+  <p class="foot">Demo portal · Quantities and listings are fictional sample data. Verify food safety, allergens, storage conditions, and collection details with the contributor.</p>
+</main>
+<script>
+const foods = [
+ {food:"Vegetable rice meals",contributor:"Green Bowl Restaurant",qty:24,unit:"meal packs",kg:12,deadline:"2026-10-22 11:30",location:"North Gate, pickup counter",org:"Helping Hands Collective",status:"Available"},
+ {food:"Fresh bread loaves",contributor:"University Canteen",qty:18,unit:"loaves",kg:7.2,deadline:"2026-10-22 12:00",location:"Canteen loading bay",org:"Campus Care Network",status:"Reserved"},
+ {food:"Bananas and apples",contributor:"Fresh Corner Café",qty:10,unit:"kg",kg:10,deadline:"2026-10-22 13:00",location:"Library-side café entrance",org:"Neighbourhood Food Bank",status:"Available"},
+ {food:"Packed chapati and dal",contributor:"Spice Route Kitchen",qty:30,unit:"meal packs",kg:15,deadline:"2026-10-22 13:30",location:"East Service Road",org:"Helping Hands Collective",status:"Collected"},
+ {food:"Vegetable sandwiches",contributor:"Innovation Block Canteen",qty:16,unit:"packs",kg:4.8,deadline:"2026-10-22 14:00",location:"Innovation Block, counter 2",org:"Student Volunteer Network",status:"Redistributed"},
+ {food:"Steamed idli and sambar",contributor:"Sunrise Tiffin House",qty:22,unit:"meal packs",kg:11,deadline:"2026-10-22 10:45",location:"Main entrance, side pickup",org:"Neighbourhood Food Bank",status:"Available"}
+];
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function render(){
+ const query=document.getElementById("search").value.toLowerCase();
+ const filter=document.getElementById("statusFilter").value;
+ const visible=foods.filter(f=>(filter==="All"||f.status===filter)&&Object.values(f).join(" ").toLowerCase().includes(query));
+ document.getElementById("records").innerHTML=visible.map(f=>`<tr><td><strong>${esc(f.food)}</strong></td><td>${esc(f.contributor)}</td><td class="quantity">${f.qty} ${esc(f.unit)}<div class="muted">≈ ${f.kg} kg</div></td><td>${esc(f.deadline)}</td><td>${esc(f.location)}</td><td>${esc(f.org)}</td><td><span class="status ${f.status.toLowerCase()}">${esc(f.status)}</span></td></tr>`).join("")||'<tr><td colspan="7">No matching records.</td></tr>';
+ const count=s=>foods.filter(f=>f.status===s).length;
+ document.getElementById("availableCount").textContent=count("Available");
+ document.getElementById("availableQty").textContent=foods.filter(f=>f.status==="Available").reduce((n,f)=>n+f.kg,0).toFixed(1)+" kg estimated";
+ document.getElementById("reservedCount").textContent=count("Reserved");
+ document.getElementById("collectedCount").textContent=count("Collected");
+ document.getElementById("redistributedCount").textContent=count("Redistributed");
+}
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("statusFilter").addEventListener("change",render);
+render();
+</script>
+</body>
+</html>
